@@ -1,53 +1,264 @@
 const express = require("express");
 const interviewRouter = express.Router();
-const {Interview} = require('../db')
-interviewRouter.use(express.json())
-const {authMiddleware} = require('../middlewares/authMiddleware')
-interviewRouter.use(express.json())
-interviewRouter.use(authMiddleware)
-interviewRouter.post('/start',async function(req,res){
-    const userId = req.userId
-    const interview = await Interview.create({
-        userId : userId,
-        status : 'started'
-    })
-    res.status(201).json({interviewId : interview._id})
-})
+const {
+    Interview,
+    Question,
+    Answer,
+    Career
+} = require("../db");
+const { authMiddleware } = require("../middlewares/authMiddleware");
+const { generateQuestions } = require("../model");
+interviewRouter.use(express.json());
+interviewRouter.use(authMiddleware);
 
-interviewRouter.post('/end',async function(req,res){
-    const interviewId = req.body.interviewId
-    const interview = await Interview.findById(interviewId)
-    if(!interview){
-        res.status(404).json('interview not found')
-        return
+//
+// START INTERVIEW
+//
+interviewRouter.post("/start", async (req, res) => {
+
+    try {
+
+        const { careerId } = req.body;
+
+        const career = await Career.findById(careerId);
+
+        if (!career) {
+            return res.status(404).json({
+                message: "Career not found"
+            });
+        }
+
+        const interview = await Interview.create({
+            userId: req.userId,
+            careerId,
+            status: "started",
+            date: new Date()
+        });
+
+        const generatedQuestions =
+            await generateQuestions(career.title);
+
+        for (const q of generatedQuestions) {
+
+            await Question.create({
+                interviewId: interview._id,
+                question: q
+            });
+
+        }
+
+        res.status(201).json({
+            interviewId: interview._id
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.status(500).json({
+            message: "Server error"
+        });
+
     }
-    interview.status = 'ended'
-    await interview.save()
-    res.status(201).json('interview ended successfully')
-})
 
-interviewRouter.get('/questions',async function(req,res){
-    const interviewId = req.query.interviewId
-    const userId = req.userId
-    if(!interviewId){
-        res.status(400).json('interviewId is not found')
-        return
+});
+
+//
+// GET QUESTIONS
+//
+interviewRouter.get("/questions", async (req, res) => {
+
+    try {
+
+        const { interviewId } = req.query;
+
+        const interview =
+            await Interview.findById(interviewId);
+
+        if (!interview) {
+            return res.status(404).json({
+                message: "Interview not found"
+            });
+        }
+
+        if (interview.userId.toString() !== req.userId) {
+
+            return res.status(403).json({
+                message: "Access denied"
+            });
+
+        }
+
+        const questions =
+            await Question.find({
+                interviewId
+            });
+
+        res.json({
+            questions
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            message: "Server error"
+        });
+
     }
-    if(interview.userId !== userId){
-        res.status(403).json('access denied')
-        return
+
+});
+
+//
+// SUBMIT ANSWER
+//
+interviewRouter.post("/answer", async (req, res) => {
+
+    try {
+
+        const {
+            interviewId,
+            questionId,
+            userAnswer
+        } = req.body;
+
+        const interview =
+            await Interview.findById(interviewId);
+
+        if (!interview) {
+
+            return res.status(404).json({
+                message: "Interview not found"
+            });
+
+        }
+
+        if (interview.userId.toString() !== req.userId) {
+
+            return res.status(403).json({
+                message: "Access denied"
+            });
+
+        }
+
+        const question =
+            await Question.findById(questionId);
+
+        if (!question) {
+
+            return res.status(404).json({
+                message: "Question not found"
+            });
+
+        }
+
+        // TODO:
+        // Call Gemini here to evaluate the answer
+
+        const aiFeedback = "Good explanation.";
+        const score = 8;
+
+        await Answer.create({
+
+            interviewId,
+
+            userId: req.userId,
+
+            questionId,
+
+            userAnswer,
+
+            aiFeedback,
+
+            score,
+
+            answeredAt: new Date()
+
+        });
+
+        res.json({
+
+            message: "Answer submitted",
+
+            aiFeedback,
+
+            score
+
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            message: "Server error"
+        });
+
     }
-    const interview = await Interview.findById(interviewId)
-    const questions = await Interview.questions.find({interviewId : interviewId})
-    res.status(200).json({questions})
-})
-inteviewRouter.post('/questions',async function(req,res){
-    const interviewId = req.body.interviewId
-    const userId = req.userId
-    
-})
 
+});
 
+//
+// END INTERVIEW
+//
+interviewRouter.post("/end", async (req, res) => {
 
-module.exports = { interviewRouter : interviewRouter }
+    try {
 
+        const { interviewId } = req.body;
+
+        const interview =
+            await Interview.findById(interviewId);
+
+        if (!interview) {
+
+            return res.status(404).json({
+                message: "Interview not found"
+            });
+
+        }
+
+        if (interview.userId.toString() !== req.userId) {
+
+            return res.status(403).json({
+                message: "Access denied"
+            });
+
+        }
+
+        const answers =
+            await Answer.find({
+                interviewId
+            });
+
+        let total = 0;
+
+        answers.forEach(answer => {
+
+            total += answer.score;
+
+        });
+
+        interview.score = total;
+        interview.status = "ended";
+
+        await interview.save();
+
+        res.json({
+
+            message: "Interview ended",
+
+            score: total
+
+        });
+
+    } catch (err) {
+
+        res.status(500).json({
+            message: "Server error"
+        });
+
+    }
+
+});
+
+module.exports = {
+    interviewRouter
+};

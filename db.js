@@ -1,49 +1,133 @@
-const mongoose = require('mongoose')
+const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
-const ObjectId = mongoose.Types.ObjectId;
 
 const UserSchema = new Schema({
-    username : String,
-    email : String,
-    password : String,
-})
+    username: {
+        type: String,
+        required: true
+    },
+    email: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    password: {
+        type: String,
+        required: true
+    }
+}, {
+    timestamps: true
+});
 
 const CareerSchema = new Schema({
-    title : String,
-    description : String,
-   
-})
+    title: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    description: {
+        type: String,
+        required: true
+    }
+}, {
+    timestamps: true
+});
 
 const InterviewSchema = new Schema({
-    userId : {ref : 'User', type : ObjectId},
-    CareerId : {ref : 'Career', type : ObjectId},
-    score : Number,
-    date : Date
-})
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
+
+    careerId: {
+        type: Schema.Types.ObjectId,
+        ref: "Career",
+        required: true
+    },
+
+    status: {
+        type: String,
+        enum: ["started", "ended"],
+        default: "started"
+    },
+
+    score: {
+        type: Number,
+        default: 0
+    },
+
+    date: {
+        type: Date,
+        default: Date.now
+    }
+}, {
+    timestamps: true
+});
+
 const QuestionSchema = new Schema({
-    question : String,
-    answer : String,
-    CareerId : {ref : 'Career', type : ObjectId}
-})
+    interviewId: {
+        type: Schema.Types.ObjectId,
+        ref: "Interview",
+        required: true
+    },
+
+    question: {
+        type: String,
+        required: true
+    }
+}, {
+    timestamps: true
+});
 
 const AnswerSchema = new Schema({
-    userId : {ref : 'User', type : ObjectId},
-    questionId : {ref : 'Question', type : ObjectId},
-    userAnswer:String,
+    interviewId: {
+        type: Schema.Types.ObjectId,
+        ref: "Interview",
+        required: true
+    },
 
-    aiFeedback:String,
+    userId: {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true
+    },
 
-    score:Number,
+    questionId: {
+        type: Schema.Types.ObjectId,
+        ref: "Question",
+        required: true
+    },
 
-    answeredAt:Date
+    userAnswer: {
+        type: String,
+        required: true
+    },
 
-})
+    aiFeedback: {
+        type: String,
+        default: ""
+    },
 
-const User = mongoose.model('User',UserSchema)
-const Career = mongoose.model('Career',CareerSchema)
-const Interview = mongoose.model('Interview',InterviewSchema)
-const Question = mongoose.model('Question',QuestionSchema)
-const Answer = mongoose.model('Answer',AnswerSchema)
+    score: {
+        type: Number,
+        default: 0
+    },
+
+    answeredAt: {
+        type: Date,
+        default: Date.now
+    }
+}, {
+    timestamps: true
+});
+
+
+const User = mongoose.model("User", UserSchema);
+const Career = mongoose.model("Career", CareerSchema);
+const Interview = mongoose.model("Interview", InterviewSchema);
+const Question = mongoose.model("Question", QuestionSchema);
+const Answer = mongoose.model("Answer", AnswerSchema);
 
 module.exports = {
     User,
@@ -51,6 +135,4 @@ module.exports = {
     Interview,
     Question,
     Answer
-}
-
-
+};

@@ -13,14 +13,14 @@ router.post('/signup',async function(req,res){
 })
    const Parsedata =  requestBody.safeParse(req.body)
    if(!Parsedata.success){
-    res.status(401).json('invalid credintials')
+    res.status(400).json('invalid credintials')
     return
    }
    const userExist = await User.findOne({
     email : Parsedata.data.email
    })
    if(userExist){
-    res.status(401).json('user already exist')
+    res.status(400).json({msg : 'user already exist'})
     return
    }
    const user = await User.create({
@@ -28,18 +28,18 @@ router.post('/signup',async function(req,res){
     password : Parsedata.data.password,
     username : Parsedata.data.username
    })
-   res.status(201).json('signed up successfully')
+   res.status(201).json({msg : 'signed up successfully'})
 })
 
 
-router.post('signin',function(req,res){
+router.post('/signin',async function(req,res){
     const requestBody = z.object({
         email : z.string().email(),
         password : z.string().min(6)
     })
     const Parsedata =  requestBody.safeParse(req.body)
     if(!Parsedata.success){
-     res.status(401).json('invalid credintials')
+     res.status(400).json({msg : 'invalid credintials'})
      return
     }
     const userExist = await User.findOne({
@@ -47,7 +47,7 @@ router.post('signin',function(req,res){
      password : Parsedata.data.password
     })
     if(!userExist){
-     res.status(401).json('user not exist')
+     res.status(401).json({msg : 'user not exist'})
      return
     }
     const token = jwt.sign({id : userExist._id},process.env.JWT_SECRET)
