@@ -4,12 +4,13 @@ const {
     Interview,
     Question,
     Answer,
-    Career
+    CareerModel
 } = require("../db");
 const { authMiddleware } = require("../middlewares/authMiddleware");
 const { generateQuestions } = require("../model");
-interviewRouter.use(express.json());
-interviewRouter.use(authMiddleware);
+const app = express();
+app.use(express.json());
+app.use(authMiddleware);
 
 //
 // START INTERVIEW
@@ -18,11 +19,11 @@ interviewRouter.post("/start", async (req, res) => {
 
     try {
 
-        const { careerId } = req.body;
+        const { CareerId } = req.body;
 
-        const career = await Career.findById(careerId);
+        const Career = await CareerModel.findById(CareerId);
 
-        if (!career) {
+        if (!Career) {
             return res.status(404).json({
                 message: "Career not found"
             });
@@ -30,13 +31,13 @@ interviewRouter.post("/start", async (req, res) => {
 
         const interview = await Interview.create({
             userId: req.userId,
-            careerId,
+            CareerId,
             status: "started",
             date: new Date()
         });
 
         const generatedQuestions =
-            await generateQuestions(career.title);
+            await generateQuestions(Career.title);
 
         for (const q of generatedQuestions) {
 
@@ -73,7 +74,7 @@ interviewRouter.get("/questions", async (req, res) => {
         const { interviewId } = req.query;
 
         const interview =
-            await Interview.findById(interviewId);
+            await Interview.findOne(interviewId);
 
         if (!interview) {
             return res.status(404).json({

@@ -1,12 +1,12 @@
 const express = require("express");
-const careerRouter = express.Router();
+const CareerRouter = express.Router();
 
-const { Career } = require("../db");
+const {CareerModel } = require("../db")
 const { authMiddleware } = require("../middlewares/authMiddleware");
 
-careerRouter.use(express.json());
+CareerRouter.use(express.json());
 
-careerRouter.post("/career", authMiddleware, async (req, res) => {
+CareerRouter.post("/Career", authMiddleware, async (req, res) => {
     try {
 
         const { title, description } = req.body;
@@ -17,7 +17,7 @@ careerRouter.post("/career", authMiddleware, async (req, res) => {
             });
         }
 
-        const existingCareer = await Career.findOne({ title });
+        const existingCareer = await CareerModel.findOne({ title });
 
         if (existingCareer) {
             return res.status(409).json({
@@ -25,14 +25,14 @@ careerRouter.post("/career", authMiddleware, async (req, res) => {
             });
         }
 
-        const career = await Career.create({
+        const Career = await CareerModel.create({
             title,
             description
         });
 
         res.status(201).json({
             message: "Career created successfully",
-            career
+            career: Career
         });
 
     } catch (err) {
@@ -46,13 +46,13 @@ careerRouter.post("/career", authMiddleware, async (req, res) => {
     }
 });
 
-careerRouter.get("/career", authMiddleware, async (req, res) => {
+CareerRouter.get("/Career", authMiddleware, async (req, res) => {
     try {
 
-        const careers = await Career.find();
+        const Careers = await CareerModel.find();
 
         res.status(200).json({
-            careers
+            Careers: Careers
         });
 
     } catch (err) {
@@ -64,19 +64,19 @@ careerRouter.get("/career", authMiddleware, async (req, res) => {
     }
 });
 
-careerRouter.get("/career/:id", authMiddleware, async (req, res) => {
+CareerRouter.get("/Career/:id", authMiddleware, async (req, res) => {
     try {
 
-        const career = await Career.findById(req.params.id);
+        const Career = await CareerModel.findById(req.params.id);
 
-        if (!career) {
+        if (!Career) {
             return res.status(404).json({
                 message: "Career not found"
             });
         }
 
         res.status(200).json({
-            career
+            Career
         });
 
     } catch (err) {
@@ -89,6 +89,6 @@ careerRouter.get("/career/:id", authMiddleware, async (req, res) => {
 });
 
 module.exports = {
-    careerRouter
+    CareerRouter
 };
-module.exports = { careerRouter : careerRouter }
+module.exports = { CareerRouter : CareerRouter }

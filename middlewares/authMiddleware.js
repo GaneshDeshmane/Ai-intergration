@@ -4,7 +4,7 @@ function authMiddleware(req,res,next){
     dotenv.config()
     const JWT_USER_SECRET = process.env.JWT_USER_SECRET
 
-    const token = req.headers.authorization
+    const token = req.headers.token
     if(!token){
         res.status(401).json('token is not found')
         return

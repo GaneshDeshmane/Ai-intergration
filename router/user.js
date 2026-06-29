@@ -1,11 +1,16 @@
 const express = require("express");
 const {z} = require('zod')
-const router = express.Router();
+const userRouter = express.Router();
 const {User} = require('../db')
 const jwt = require('jsonwebtoken')
-router.use(express.json())
+const app = express();
+const dotenv = require('dotenv');
+dotenv.config();
+const JWT_USER_SECRET = process.env.JWT_USER_SECRET
+app.use(express.json());
 
-router.post('/signup',async function(req,res){
+
+userRouter.post('/signup',async function(req,res){
     const requestBody = z.object({
     email : z.string().email(),
     password : z.string().min(6),
@@ -32,7 +37,7 @@ router.post('/signup',async function(req,res){
 })
 
 
-router.post('/signin',async function(req,res){
+userRouter.post('/signin',async function(req,res){
     const requestBody = z.object({
         email : z.string().email(),
         password : z.string().min(6)
@@ -50,7 +55,9 @@ router.post('/signin',async function(req,res){
      res.status(401).json({msg : 'user not exist'})
      return
     }
-    const token = jwt.sign({id : userExist._id},process.env.JWT_SECRET)
+    const token = jwt.sign({id : userExist._id},process.env.JWT_USER_SECRET)
     res.status(201).json({token})
 })
 
+
+module.exports = { userRouter }

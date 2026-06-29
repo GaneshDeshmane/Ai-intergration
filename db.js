@@ -124,14 +124,14 @@ const AnswerSchema = new Schema({
 
 
 const User = mongoose.model("User", UserSchema);
-const Career = mongoose.model("Career", CareerSchema);
+const CareerModel = mongoose.model("Career", CareerSchema);
 const Interview = mongoose.model("Interview", InterviewSchema);
 const Question = mongoose.model("Question", QuestionSchema);
 const Answer = mongoose.model("Answer", AnswerSchema);
 
 module.exports = {
     User,
-    Career,
+    CareerModel,
     Interview,
     Question,
     Answer
